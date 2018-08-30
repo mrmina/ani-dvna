@@ -2,6 +2,9 @@ var router = require('express').Router()
 var appHandler = require('../core/appHandler')
 var authHandler = require('../core/authHandler')
 
+const aws_access_key_fake = 'AFDSJFHSDL356723ADADSFDS'
+const aws_secrets = 'dfgjdhfigkhufjr638467s74652496edkfjherf'
+
 module.exports = function () {
     router.get('/', authHandler.isAuthenticated, function (req, res) {
         res.redirect('/learn')
