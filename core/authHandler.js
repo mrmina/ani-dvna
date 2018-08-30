@@ -3,6 +3,9 @@ var bCrypt = require('bcrypt')
 var md5 = require('md5')
 
 module.exports.isAuthenticated = function (req, res, next) {
+	// ani TEST
+	const buf = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72]);
+	
 	if (req.isAuthenticated()) {
 		req.flash('authenticated', true)
 		return next();
