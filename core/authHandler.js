@@ -2,6 +2,86 @@ var db = require('../models')
 var bCrypt = require('bcrypt')
 var md5 = require('md5')
 
+// ani TEST
+const Crypto = require('crypto');
+
+const defaults = {
+  IV_SIZE: 12,
+  ENCRYPTION_ALGORITHM: 'aes-256-gcm',
+  TOKEN_SEPARATOR: '|$|',
+};
+
+async function encrypt(plainText, key, {
+  IV_SIZE,
+  ENCRYPTION_ALGORITHM,
+  TOKEN_SEPARATOR,
+} = defaults) {
+  //const initVector = Crypto.randomBytes(IV_SIZE);
+  const initVector = '1f3g41f3g41f3g41f3g4';
+  const cipher = Crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, initVector);
+
+  const chunks = [];
+  cipher.on('readable', () => {
+    const data = cipher.read();
+    if (data) chunks.push(data);
+  });
+
+  cipher.write(plainText);
+  cipher.end();
+
+
+  const encrypted = await new Promise((res) => {
+    cipher.on('end', () => {
+      res(Buffer.concat(chunks).toString('base64'));
+    });
+  });
+
+  const authTag = cipher.getAuthTag().toString('base64');
+
+
+  return (encrypted + TOKEN_SEPARATOR + initVector.toString('base64') + TOKEN_SEPARATOR + authTag);
+}
+
+
+async function decrypt(token, key, {
+  ENCRYPTION_ALGORITHM,
+  TOKEN_SEPARATOR,
+} = defaults) {
+  const [
+    payload,
+    encodedIV,
+    encodedAuthTag,
+  ] = token.split(TOKEN_SEPARATOR);
+
+  const initVector = Buffer.from(encodedIV, 'base64');
+  const authTag = Buffer.from(encodedAuthTag, 'base64');
+
+  const decipher = Crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, initVector);
+
+  decipher.setAuthTag(authTag);
+
+  let decrypted = '';
+
+  decipher.on('readable', () => {
+    const data = decipher.read();
+    if (data) decrypted += data.toString('utf8');
+  });
+
+  decipher.write(payload, 'base64');
+  decipher.end();
+
+  return new Promise((res) => {
+    decipher.on('end', () => {
+      res(decrypted);
+    });
+  });
+}
+
+
+
+
+
+
 module.exports.isAuthenticated = function (req, res, next) {
 	// ani TEST
 	const buf = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72]);
